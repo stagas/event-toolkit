@@ -1,0 +1,77 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`queue(fn) debounce debounce() = last 1`] = `
+Array [
+  6,
+  6,
+  6,
+  6,
+  6,
+]
+`;
+
+exports[`queue(fn) debounce first() 1`] = `
+Array [
+  2,
+  2,
+  2,
+  2,
+]
+`;
+
+exports[`queue(fn) debounce first.last() 1`] = `
+Array [
+  2,
+  8,
+  8,
+  8,
+  8,
+]
+`;
+
+exports[`queue(fn) debounce first.last.next() 1`] = `
+Array [
+  2,
+  7,
+  7,
+  7,
+  13,
+]
+`;
+
+exports[`queue(fn) debounce last.next() simple 1`] = `
+Array [
+  5,
+  5,
+  5,
+  5,
+  11,
+]
+`;
+
+exports[`queue(fn) debounce last.next() with additional 1`] = `
+Array [
+  5,
+  5,
+  5,
+  5,
+  13,
+  13,
+  13,
+  22,
+]
+`;
+
+exports[`queue(fn) raf multiple plain 1`] = `
+Array [
+  1,
+  2,
+]
+`;
+
+exports[`queue(fn) raf multiple with args 1`] = `
+Array [
+  1,
+  4,
+]
+`;
