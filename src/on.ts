@@ -1,83 +1,16 @@
+import type { EventHandler, EventKeys, EventsOf, Fn, StringOf } from 'everyday-types'
+import { Getter } from 'proxy-toolkit'
 import { bool, Fluent, toFluent } from 'to-fluent'
-import { String } from 'ts-toolbelt'
 import { EventOptions, wrapEvent } from './event'
-import { Fn, Target, TargetEventMap } from './types'
-
-export type PrefixOn<T extends string> = `on${T}`
-export type Narrow<T, K> = K extends keyof T ? K : never
-export type Get<T, K> = T[Narrow<T, K>]
-export type StringOf<T> = T extends string ? T : never
-export type ToEventFluent<T> = T & Fluent<T, Required<OnOptions>>
-export type Keys<T> = keyof { [K in keyof T]: StringOf<K> }
-export type SansOnKeys<T> = keyof {
-  [K in Keys<T> as String.Split<StringOf<K>, 'on'>[1]]-?: any
-}
 
 /**
  * Removes the event listener and returns a promise used for chaining.
  * @public
  */
 export type Off = () => Promise<void>
-
-/**
- * Event handler proxy. Returns Off.
- */
-export type EventMapProxy<T extends Target> =
-  & {
-    [K in Keys<T>]: ToEventFluent<
-      Fn<[Fn<[Get<TargetEventMap<T>, K>], void>], Off>
-    >
-  }
-  & {
-    [K in SansOnKeys<T>]: ToEventFluent<
-      Fn<[Get<T, PrefixOn<StringOf<K>>>], Off>
-    >
-  }
-
-function onEvent<T extends Target, K extends keyof GlobalEventHandlersEventMap>(
-  el: T,
-  type: K,
-  listener: (ev: GlobalEventHandlersEventMap[K]) => any,
-  options?: boolean | AddEventListenerOptions,
-): Off
-
-function onEvent<T extends ShadowRoot, K extends keyof ShadowRootEventMap>(
-  el: T,
-  type: K,
-  listener: (ev: ShadowRootEventMap[K]) => any,
-  options?: boolean | AddEventListenerOptions,
-): Off
-
-function onEvent<T extends Document, K extends keyof DocumentEventMap>(
-  el: T,
-  type: K,
-  listener: (ev: DocumentEventMap[K]) => any,
-  options?: boolean | AddEventListenerOptions,
-): Off
-
-function onEvent<T extends Window, K extends keyof WindowEventMap>(
-  el: T,
-  type: K,
-  listener: (ev: WindowEventMap[K]) => any,
-  options?: boolean | AddEventListenerOptions,
-): Off
-
-function onEvent<T extends SVGElement, K extends keyof SVGElementEventMap>(
-  el: T,
-  type: K,
-  listener: (ev: SVGElementEventMap[K]) => any,
-  options?: boolean | AddEventListenerOptions,
-): Off
-
-function onEvent<T extends HTMLElement, K extends keyof HTMLElementEventMap>(
-  el: T,
-  type: K,
-  listener: (ev: HTMLElementEventMap[K]) => any,
-  options?: boolean | AddEventListenerOptions,
-) {
-  el.addEventListener(type, listener, options)
-  return () => Promise.resolve(el.removeEventListener(type, listener, options))
-}
+export type On<T> = T & Fluent<T, Required<OnOptions>>
+export type OnEvent<T, K extends EventKeys<T>> = On<Fn<[EventHandler<T, EventsOf<T>[K]>?], Off>>
+export type OnGetter<T> = { [K in EventKeys<T>]: OnEvent<T, K> }
 
 export class OnOptions extends EventOptions implements AddEventListenerOptions {
   once = bool
@@ -85,11 +18,13 @@ export class OnOptions extends EventOptions implements AddEventListenerOptions {
   capture = bool
 }
 
-const onFluent = <T extends Target, K>(el: T, name: K) =>
-  toFluent(OnOptions, options => listener => onEvent(el, name as any, wrapEvent(options)(listener), options))
+const onEvent = (el: EventTarget, type: string, listener: EventHandler<any, any>, options: AddEventListenerOptions) => {
+  el.addEventListener(type, listener, options)
+  return () => Promise.resolve(el.removeEventListener(type, listener, options))
+}
 
-const getProxy = <T extends Target>(el: T) =>
-  new Proxy({}, { get: (_, key: string) => onFluent(el, key) }) as EventMapProxy<T>
+const onEventFluent = (el: EventTarget, key: string) =>
+  toFluent(OnOptions, options => (listener = () => {}) => onEvent(el, key, wrapEvent(options)(listener), options))
 
 /**
  * Adds an event listener for `el` using fluent options.
@@ -139,4 +74,11 @@ const getProxy = <T extends Target>(el: T) =>
  *
  * @public
  */
-export const on = <T extends Target>(el: T): EventMapProxy<T> => getProxy(el)
+
+export function on<T extends EventTarget>(el: T): OnGetter<T>
+export function on<T extends EventTarget, K extends EventKeys<T>>(el: T, key: K): OnEvent<T, K>
+export function on<T extends EventTarget, K extends EventKeys<T>>(el: T, key?: StringOf<K>) {
+  return key != null
+    ? onEventFluent(el, key)
+    : Getter(key => onEventFluent(el, key))
+}

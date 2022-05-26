@@ -1,11 +1,6 @@
+import { EventHandler, Target } from 'everyday-types'
 import { bool, toFluent } from 'to-fluent'
 import { QueueOptions, wrapQueue } from './queue'
-import { Target } from './types'
-
-export type EventHandler<T extends Target, E extends Event> = (
-  this: T,
-  event: E,
-) => any
 
 export class EventOptions extends QueueOptions {
   prevent = bool
@@ -14,7 +9,7 @@ export class EventOptions extends QueueOptions {
 }
 
 export const wrapEvent = (options: EventOptions) =>
-  <T extends Target, E extends Event>(fn: EventHandler<T, E>) =>
+  <T extends Target, E extends Event>(fn: EventHandler<T, E> = () => {}) =>
     wrapQueue(options)(
       options.prevent || options.stop || options.immediate
         ? function(this: T, e: E) {
@@ -24,7 +19,7 @@ export const wrapEvent = (options: EventOptions) =>
               ? e.stopImmediatePropagation()
               : e.stopPropagation()
           }
-          return fn.call(this, e)
+          return fn.call(this, e as any)
         }
         : fn
     )

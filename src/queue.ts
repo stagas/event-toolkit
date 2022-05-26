@@ -1,6 +1,6 @@
+import type { Fn } from 'everyday-types'
 import { bool, toFluent } from 'to-fluent'
-import { chain, run, Task } from './task'
-import type { Fn } from './types'
+import { groupTasks, runTask, Task } from './task'
 
 export class QueueOptions {
   first = bool
@@ -11,12 +11,14 @@ export class QueueOptions {
   task = bool
   time = bool
 
+  atomic = bool
+
   debounce?: number
   throttle?: number
 }
 
 export const wrapQueue = (options: QueueOptions) =>
-  <P extends any[]>(fn: Fn<P, any>) => {
+  <P extends any[], R>(fn: Fn<P, R>): Fn<P, R | Promise<R>> => {
     const queued: Task[] = []
     let queueFn: Fn<[Fn<any, any>], any>
     let id: any
@@ -35,7 +37,9 @@ export const wrapQueue = (options: QueueOptions) =>
         clearTimeout(id)
         id = setTimeout(fn, options.debounce)
       }
-    } else {
+    } else if (options.atomic)
+      queueFn = fn => fn()
+    else {
       // No queue function provided, return identity.
       // This is used when extending this in `event`.
       return fn
@@ -54,52 +58,62 @@ export const wrapQueue = (options: QueueOptions) =>
       let task: Task
 
       if (queued.length) {
+        if (options.atomic) {
+          task = queued.shift()!
+          runTask(task)
+            .catch(console.warn)
+            .finally(() => queued.length && queueFn(cb))
+          return
+        }
         if (options.last) {
           if (options.next) {
             const left = queued.splice(0, queued.length - 1)
             task = left.pop() ?? queued.pop()!
-            chain(left, task)
-            last = run(task)
+            groupTasks(task, left)
+            last = runTask(task)
             if (queued.length) {
               queueFn(cb)
               return
             }
           } else {
             task = queued.pop()!
-            chain(queued.splice(0), task)
-            last = run(task)
+            groupTasks(task, queued.splice(0))
+            last = runTask(task)
           }
         } else if (options.next) {
           task = queued.shift()!
-          chain(queued.splice(0, queued.length - 1), task)
+          groupTasks(task, queued.splice(0, queued.length - 1))
           queueFn(cb)
-          last = run(task)
+          last = runTask(task)
           return
         } else {
           task = Task()
-          chain(queued.splice(0), task)
+          groupTasks(task, queued.splice(0))
           task.resolve(last)
         }
+        // queueFn(cb)
       }
-
+      // else {
       runs = false
+      // }
     }
 
     return function(this: any, ...args: P) {
       const task = Task(fn, this, args)
 
-      if (!runs) {
+      if (!runs && options.first) {
+        runs = true
+        last = runTask(task)
         queueFn(cb)
-
-        if (!runs && options.first) {
-          runs = true
-          last = run(task)
-          return task.promise
-        }
+        return task.promise
       }
 
-      runs = true
       queued.push(task)
+
+      if (!runs) {
+        runs = true
+        queueFn(cb)
+      }
 
       return task.promise
     }

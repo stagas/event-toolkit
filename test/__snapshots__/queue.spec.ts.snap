@@ -1,5 +1,95 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`queue(fn) atomic(fn) alternate 1`] = `
+Array [
+  1,
+  2,
+  3,
+  4,
+]
+`;
+
+exports[`queue(fn) atomic(fn) makes the function atomic 1`] = `
+Array [
+  1,
+  2,
+  3,
+  4,
+]
+`;
+
+exports[`queue(fn) atomic(fn) receives parameters 1`] = `
+Array [
+  2,
+  3,
+  4,
+  5,
+]
+`;
+
+exports[`queue(fn) atomic(fn) returns result 1`] = `
+Array [
+  1,
+  2,
+  3,
+  4,
+]
+`;
+
+exports[`queue(fn) atomic(fn) run in order 1`] = `
+Array [
+  1,
+  2,
+  3,
+  4,
+  5,
+]
+`;
+
+exports[`queue(fn) atomic(fn) throwing doesnt destroy queue 1`] = `
+Array [
+  1,
+  2,
+]
+`;
+
+exports[`queue(fn) atomic(fn) uses this 1`] = `
+Array [
+  1,
+  2,
+  3,
+  4,
+]
+`;
+
+exports[`queue(fn) atomic(fn) with timeout 1`] = `
+Array [
+  1,
+  2,
+]
+`;
+
+exports[`queue(fn) atomic(fn) with timeout 2`] = `
+Array [
+  Object {
+    "status": "fulfilled",
+    "value": 1,
+  },
+  Object {
+    "status": "fulfilled",
+    "value": 2,
+  },
+  Object {
+    "status": "fulfilled",
+    "value": undefined,
+  },
+  Object {
+    "status": "fulfilled",
+    "value": undefined,
+  },
+]
+`;
+
 exports[`queue(fn) debounce debounce() = last 1`] = `
 Array [
   6,

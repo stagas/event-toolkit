@@ -11,3 +11,15 @@ declare class MIDIMessageEvent extends Event implements WebMidi.MIDIMessageEvent
   receivedTime: number
   constructor(kind: string, payload?: { data: Uint8Array })
 }
+
+// declare interface EventHandler<T, E> {
+//   (this: T, ev: E & { currentTarget: T }): any
+// }
+
+// declare interface HTMLButtonElement {
+//   onclick: EventHandler<HTMLButtonElement, MouseEvent>
+// }
+
+// declare interface Window {
+//   onkeyup: EventHandler<Window, MouseEvent>
+// }

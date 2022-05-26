@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`abort latest 1`] = `
+Array [
+  3,
+]
+`;
+
+exports[`abort times out 1`] = `Array []`;

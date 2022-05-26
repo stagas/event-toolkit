@@ -1,5 +1,6 @@
-import { inspectWithPreamble } from '@n1kk/intspector'
+import { inspectWithPreamble, setOptions } from '@n1kk/intspector'
 import { event } from '../src/event'
+setOptions(require('../tsconfig.json'), true)
 
 describe('event(listener)', () => {
   it('constructs an event listener', () => {

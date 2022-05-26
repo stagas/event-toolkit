@@ -1,6 +1,9 @@
+import { abort } from '../src/abort'
 import { queue } from '../src/queue'
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+let rx = 0
+const rnd = () => Math.sin(++rx * 1000) / 2 + 0.5
 
 describe('queue(fn)', () => {
   describe('task', () => {
@@ -329,6 +332,157 @@ describe('queue(fn)', () => {
       expect(count).toBe(22)
       expect(await Promise.all(p)).toMatchSnapshot()
       expect(count).toBe(22)
+    })
+  })
+
+  describe('atomic(fn)', () => {
+    it('run in order', async () => {
+      const results: any = []
+      let i = 0
+      const fn = queue.atomic(async () => {
+        const res = ++i
+        await wait(rnd() * 10)
+        results.push(res)
+      })
+      await Promise.all([
+        fn(),
+        fn(),
+        fn(),
+        fn(),
+        fn(),
+      ])
+      expect(results).toMatchSnapshot()
+    })
+
+    it('makes the function atomic', async () => {
+      const results: any = []
+      let i = 0
+      const fn = queue.atomic(async () => {
+        const a = i
+        await new Promise(resolve => setTimeout(resolve, rnd() * 100))
+        results.push(a + 1)
+        i = a + 1
+      })
+      fn()
+      fn()
+      fn()
+      await fn()
+      expect(i).toEqual(4)
+      expect(results).toMatchSnapshot()
+    })
+
+    it('receives parameters', async () => {
+      const results: any = []
+      let i = 0
+      const fn = queue.atomic(async (x: number) => {
+        const a = i
+        await new Promise(resolve => setTimeout(resolve, rnd() * 100))
+        results.push(a + 1 + x)
+        i = a + 1
+      })
+      fn(1)
+      fn(1)
+      fn(1)
+      await fn(1)
+      expect(i).toEqual(4)
+      expect(results).toMatchSnapshot()
+    })
+
+    it('alternate', async () => {
+      const results: any = []
+      let i = 0
+      const fn = queue.atomic(async () => {
+        const a = i
+        await new Promise(resolve => setTimeout(resolve, rnd() * 100))
+        results.push(a + 1)
+        i = a + 1
+      })
+      const promises = [fn(), fn(), fn(), fn()]
+      await Promise.all(promises)
+      expect(i).toEqual(4)
+      expect(results).toMatchSnapshot()
+    })
+
+    it('returns result', async () => {
+      const results: any = []
+      let i = 0
+      const fn = queue.atomic(async () => {
+        const a = i
+        await new Promise(resolve => setTimeout(resolve, rnd() * 100))
+        results.push(a + 1)
+        i = a + 1
+        return i
+      })
+      fn()
+      fn()
+      fn()
+      const result = await fn()
+      expect(i).toEqual(4)
+      expect(result).toEqual(4)
+      expect(results).toMatchSnapshot()
+    })
+
+    it('throwing doesnt destroy queue', async () => {
+      const results: any = []
+      let i = 0
+      let times = 0
+      const fn = queue.atomic(async () => {
+        const a = i
+        times++
+        if (a === 2) throw new Error('problem')
+        await new Promise(resolve => setTimeout(resolve, rnd() * 100))
+        results.push(a + 1)
+        i = a + 1
+        return i
+      })
+      await Promise.allSettled([fn(), fn(), fn(), fn()])
+      expect(i).toEqual(2)
+      expect(times).toEqual(4)
+      expect(results).toMatchSnapshot()
+    })
+
+    it('uses this', async () => {
+      const results: any = []
+      const obj = {
+        i: 0,
+        fn: queue.atomic(
+          async function(this: any) {
+            const a = this.i
+            await new Promise(resolve => setTimeout(resolve, rnd() * 100))
+            results.push(a + 1)
+            this.i = a + 1
+            return a
+          }
+        ),
+      }
+      await Promise.allSettled([obj.fn(), obj.fn(), obj.fn(), obj.fn()])
+      expect(obj.i).toEqual(4)
+      expect(results).toMatchSnapshot()
+    })
+
+    it('with timeout', async () => {
+      const results: any = []
+      let i = 0
+      let times = 0
+      const fn = queue.atomic(
+        abort.timeout(200)(signal =>
+          async () => {
+            const a = i
+            times++
+            await new Promise(resolve => setTimeout(resolve, a === 2 ? 300 : 100))
+            if (signal.aborted) return
+            results.push(a + 1)
+            i = a + 1
+            return i
+          }
+        )
+      )
+      const output = await Promise.allSettled([fn(), fn(), fn(), fn()])
+      await new Promise(resolve => setTimeout(resolve, 200))
+      expect(i).toEqual(2)
+      expect(times).toEqual(4)
+      expect(results).toMatchSnapshot()
+      expect(output).toMatchSnapshot()
     })
   })
 })

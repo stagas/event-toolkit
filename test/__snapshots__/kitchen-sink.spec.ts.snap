@@ -1,0 +1,32 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`kitchen sink on on(btn).atomic() 1`] = `
+Array [
+  1,
+  2,
+  3,
+  4,
+  5,
+]
+`;
+
+exports[`kitchen sink on on(btn).atomic.debounce() 1`] = `
+Array [
+  1,
+]
+`;
+
+exports[`kitchen sink on on(btn).atomic.debounce() 2`] = `
+Array [
+  1,
+  2,
+]
+`;
+
+exports[`kitchen sink on on(btn).atomic.throttle() 1`] = `
+Array [
+  1,
+  2,
+  3,
+]
+`;
