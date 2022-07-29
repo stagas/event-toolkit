@@ -7,7 +7,7 @@ import { EventOptions, wrapEvent } from './event'
  * Removes the event listener and returns a promise used for chaining.
  * @public
  */
-export type Off = () => Promise<void>
+export type Off = () => void
 export type On<T> = T & Fluent<T, Required<OnOptions>>
 export type OnEvent<T, K extends EventKeys<T>> = On<Fn<[EventHandler<T, EventsOf<T>[K]>?], Off>>
 export type OnGetter<T> = { [K in EventKeys<T>]: OnEvent<T, K> }
@@ -20,7 +20,7 @@ export class OnOptions extends EventOptions implements AddEventListenerOptions {
 
 const onEvent = (el: EventTarget, type: string, listener: EventHandler<any, any>, options: AddEventListenerOptions) => {
   el.addEventListener(type, listener, options)
-  return () => Promise.resolve(el.removeEventListener(type, listener, options))
+  return () => el.removeEventListener(type, listener, options)
 }
 
 const onEventFluent = (el: EventTarget, key: string) =>
