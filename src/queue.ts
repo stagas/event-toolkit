@@ -1,4 +1,5 @@
 import type { Fn } from 'everyday-types'
+import { shallowEqual } from 'everyday-utils'
 import { bool, toFluent } from 'to-fluent'
 import { groupTasks, runTask, Task } from './task'
 
@@ -17,8 +18,9 @@ export class QueueOptions {
   throttle?: number
 }
 
-export const wrapQueue = (options: QueueOptions) =>
-  <P extends any[], R>(fn: Fn<P, R>): Fn<P, R | Promise<R>> => {
+export const wrapQueue = (options: QueueOptions = {} as QueueOptions) =>
+  <P extends any[], R>(fn: Fn<P, R>): Fn<P, R extends Promise<any> ? R : Promise<R>> => {
+    const initialOptions = { ...options }
     const queued: Task[] = []
     let queueFn: Fn<[Fn<any, any>], any>
     let id: any
@@ -42,7 +44,7 @@ export const wrapQueue = (options: QueueOptions) =>
     else {
       // No queue function provided, return identity.
       // This is used when extending this in `event`.
-      return fn
+      return fn as any
     }
 
     if (options.first == null && options.last == null) {
@@ -61,8 +63,10 @@ export const wrapQueue = (options: QueueOptions) =>
         if (options.atomic) {
           task = queued.shift()!
           runTask(task)
-            .catch(console.warn)
-            .finally(() => queued.length && queueFn(cb))
+            .catch((_error: Error) => {
+              //!warn _error
+            })
+            .finally(() => queueFn(cb))
           return
         }
         if (options.last) {
@@ -91,14 +95,12 @@ export const wrapQueue = (options: QueueOptions) =>
           groupTasks(task, queued.splice(0))
           task.resolve(last)
         }
-        // queueFn(cb)
       }
-      // else {
       runs = false
-      // }
     }
 
-    return function(this: any, ...args: P) {
+    function wrapped(this: any, ...args: P) {
+      //!? 'wrap called'
       const task = Task(fn, this, args)
 
       if (!runs && options.first) {
@@ -110,13 +112,29 @@ export const wrapQueue = (options: QueueOptions) =>
 
       queued.push(task)
 
-      if (!runs) {
+      if (!runs || options.debounce) {
         runs = true
         queueFn(cb)
       }
 
       return task.promise
     }
+
+    wrapped.fn = fn
+    wrapped.options = initialOptions
+
+    wrapped.update = (newFn: Fn<P, R>, newOptions: QueueOptions) => {
+      //!? 'updating fn'
+      if (!shallowEqual(initialOptions, newOptions)) {
+        //!? 'new options', initialOptions, newOptions
+        return newFn
+      }
+      fn = newFn
+      //!? 'updated and returned previous wrapped'
+      return wrapped
+    }
+
+    return wrapped as any
   }
 
 /**
