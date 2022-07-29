@@ -73,20 +73,6 @@ describe('off = on(el).<event>(cb)', () => {
     expect(clicked).toBe(1)
   })
 
-  it('off runs its callback', async () => {
-    const btn = document.createElement('button')
-    let clicked = 0
-    const off = on(btn).click(_e => clicked++)
-    btn.click()
-    expect(clicked).toBe(1)
-    const p = off()
-    btn.click()
-    expect(clicked).toBe(1)
-    let offCallback = 0
-    await p.then(() => offCallback++).then(() => offCallback++)
-    expect(offCallback).toBe(2)
-  })
-
   it('detects custom event listeners', () => {
     class El extends HTMLElement {
       onfoo?(ev: CustomEvent<{ some: string }>): void

@@ -27,13 +27,15 @@ export const abort = toFluent(
               ctrl.abort()
               if (options.throw)
                 throw error
-              else
-                console.warn(error)
+              else {
+                //!warn error
+              }
             } else {
               if (options.throw)
                 throw error
-              else
-                console.warn(error)
+              else {
+                //!warn error
+              }
             }
           }
         } else {

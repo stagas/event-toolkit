@@ -99,6 +99,15 @@ describe('queue(fn)', () => {
     })
   })
 
+  describe('async/promise functions', () => {
+    it('works', async () => {
+      const cb = queue.task(async () => {
+        return 'ok'
+      })
+      expect(await cb()).toEqual('ok')
+    })
+  })
+
   describe('raf', () => {
     it('one', async () => {
       let count = 0
@@ -229,9 +238,13 @@ describe('queue(fn)', () => {
       const p = []
       const cb = queue.debounce(5)((x: number) => count += x)
       p.push(cb(2)) // discarded
+      await wait(2)
       p.push(cb(3)) // discarded
+      await wait(2)
       p.push(cb(4)) // discarded
+      await wait(2)
       p.push(cb(5)) // discarded
+      await wait(2)
       p.push(cb(6)) // passes(last)
       expect(count).toBe(0)
       await wait(6)
@@ -247,8 +260,11 @@ describe('queue(fn)', () => {
       const p = []
       const cb = queue.debounce(5).first((x: number) => (count += x))
       p.push(cb(2)) // passes (first)
+      await wait(2)
       p.push(cb(3)) // discarded
+      await wait(2)
       p.push(cb(4)) // discarded
+      await wait(2)
       p.push(cb(5)) // discarded
       expect(count).toBe(2)
       await wait(6)
@@ -263,9 +279,13 @@ describe('queue(fn)', () => {
       const p = []
       const cb = queue.debounce(5).first.last((x: number) => (count += x))
       p.push(cb(2)) // passes (first)
+      await wait(2)
       p.push(cb(3)) // discarded
+      await wait(2)
       p.push(cb(4)) // discarded
+      await wait(2)
       p.push(cb(5)) // discarded
+      await wait(2)
       p.push(cb(6)) // passes (last)
       expect(count).toBe(2)
       await wait(6)
@@ -280,9 +300,13 @@ describe('queue(fn)', () => {
       const p = []
       const cb = queue.debounce(5).first.last.next((x: number) => (count += x))
       p.push(cb(2)) // passes (first)
+      await wait(2)
       p.push(cb(3)) // discarded
+      await wait(2)
       p.push(cb(4)) // discarded
+      await wait(2)
       p.push(cb(5)) // passes
+      await wait(2)
       p.push(cb(6)) // passes (next quantum)
       expect(count).toBe(2)
       await wait(6)
@@ -298,9 +322,13 @@ describe('queue(fn)', () => {
       const p = []
       const cb = queue.debounce(5).last.next((x: number) => (count += x))
       p.push(cb(2)) // discarded
+      await wait(2)
       p.push(cb(3)) // discarded
+      await wait(2)
       p.push(cb(4)) // discarded
+      await wait(2)
       p.push(cb(5)) // passes
+      await wait(2)
       p.push(cb(6)) // passes (next quantum)
       expect(count).toBe(0)
       await wait(6)
@@ -316,15 +344,21 @@ describe('queue(fn)', () => {
       const p = []
       const cb = queue.debounce(5).last.next((x: number) => (count += x))
       p.push(cb(2)) // discarded
+      await wait(2)
       p.push(cb(3)) // discarded
+      await wait(2)
       p.push(cb(4)) // discarded
+      await wait(2)
       p.push(cb(5)) // passes
+      await wait(2)
       p.push(cb(6)) // passes but is discarded by next
       expect(count).toBe(0)
       await wait(5)
       expect(count).toBe(5)
       p.push(cb(7)) // discards 6
+      await wait(2)
       p.push(cb(8)) // passes (last)
+      await wait(2)
       p.push(cb(9)) // passes (next quantum)
       await wait(5)
       expect(count).toBe(13)
