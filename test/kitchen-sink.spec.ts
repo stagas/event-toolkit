@@ -117,7 +117,7 @@ describe('kitchen sink', () => {
       let i = 0
       on(btn).click.atomic.throttle(40)(async () => {
         const res = ++i
-        await wait(Math.random() * 10)
+        await wait(Math.random() * 8)
         results.push(res)
       })
       btn.click()
