@@ -3,7 +3,7 @@ import { EventHandler } from 'everyday-types'
 import { on } from '../src/on'
 setOptions(require('../tsconfig.json'), true)
 
-let x = 0
+let x = 999
 
 describe('off = on(el).<event>(cb)', () => {
   it('adds an event listener', () => {

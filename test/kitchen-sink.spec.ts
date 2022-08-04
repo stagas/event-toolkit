@@ -9,7 +9,7 @@ describe('kitchen sink', () => {
     it('event.raf', async () => {
       const btn = document.createElement('button')
       let clicked = 0
-      btn.onclick = event.raf(_e => clicked++)
+      btn.onclick = event.raf(_e => clicked++) as any
       btn.click()
       btn.click()
       btn.click()
@@ -25,7 +25,7 @@ describe('kitchen sink', () => {
     it('event.raf.first.last.next', async () => {
       const btn = document.createElement('button')
       let clicked = 0
-      btn.onclick = event.raf.first.last.next(() => clicked++)
+      btn.onclick = event.raf.first.last.next(() => clicked++) as any
       btn.click()
       btn.click()
       btn.click()
@@ -136,7 +136,7 @@ describe('kitchen sink', () => {
       let i = 0
       on(btn).click.atomic.debounce(40)(async () => {
         const res = ++i
-        await wait(Math.random() * 10)
+        await wait(Math.random() * 8)
         results.push(res)
       })
       btn.click()
