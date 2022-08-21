@@ -1,7 +1,5 @@
-import { inspectWithPreamble, setOptions } from '@n1kk/intspector'
 import { EventHandler } from 'everyday-types'
 import { on } from '../src/on'
-setOptions(require('../tsconfig.json'), true)
 
 let x = 999
 
@@ -39,17 +37,6 @@ describe('off = on(el).<event>(cb)', () => {
     expect(clicked).toBe(1)
     btn.click()
     expect(clicked).toBe(2)
-  })
-
-  it('type test', () => {
-    const { result } = inspectWithPreamble(`
-      import { on } from '../src/on'
-      const btn = document.createElement('button')
-      let event: MouseEvent
-      on(btn).click(e => event = e)
-    `)({ result: 'typeof event' })
-
-    expect(result).toEqual('MouseEvent')
   })
 
   it('accepts options', () => {

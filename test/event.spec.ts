@@ -1,6 +1,4 @@
-import { inspectWithPreamble, setOptions } from '@n1kk/intspector'
 import { event } from '../src/event'
-setOptions(require('../tsconfig.json'), true)
 
 describe('event(listener)', () => {
   it('constructs an event listener', () => {
@@ -9,18 +7,6 @@ describe('event(listener)', () => {
     btn.onclick = event(_e => clicked++)
     btn.click()
     expect(clicked).toBe(1)
-  })
-
-  it('infers type', () => {
-    const { result } = inspectWithPreamble(`
-      import { event } from '../src/event'
-      const btn = document.createElement('button')
-      let ev: MouseEvent
-      btn.onclick = event(e => ev = e)
-      btn.click()
-    `)({ result: 'typeof ev' })
-
-    expect(result).toEqual('MouseEvent')
   })
 
   it('decorates listener', () => {
