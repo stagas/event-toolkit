@@ -3,7 +3,7 @@
   "author": "stagas",
   "short": "stagas/event-toolkit",
   "description": "Toolkit for DOM events.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -73,7 +73,7 @@
     "rimraf": "3.0.2",
     "swcno": "0.1.1",
     "typescript": "4.7.3",
-    "utr": "^1.3.1"
+    "utr": "^1.3.2"
   },
   "dependencies": {
     "everyday-types": "^1.1.0",
