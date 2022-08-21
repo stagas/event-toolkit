@@ -1,3 +1,4 @@
+export type { Fn } from 'everyday-types'
 export * from './abort'
 export * from './constants'
 export * from './dispatch'
