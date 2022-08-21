@@ -1,3 +1,5 @@
+// @env browser
+// @env jsdom
 import { dispatch } from '../src/dispatch'
 
 let x = 0

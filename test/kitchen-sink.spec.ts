@@ -1,3 +1,5 @@
+// @env browser
+// @env jsdom
 import { event, on } from '../src'
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))

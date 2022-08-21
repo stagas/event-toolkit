@@ -1,3 +1,5 @@
+// @env browser
+// @env jsdom
 import { event } from '../src/event'
 
 describe('event(listener)', () => {

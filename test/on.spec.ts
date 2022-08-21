@@ -1,3 +1,5 @@
+// @env browser
+// @env jsdom
 import { EventHandler } from 'everyday-types'
 import { on } from '../src/on'
 

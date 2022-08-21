@@ -1,3 +1,5 @@
+// @env browser
+// @env jsdom
 import { abort } from '../src/abort'
 import { queue } from '../src/queue'
 

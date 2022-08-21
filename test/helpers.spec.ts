@@ -1,3 +1,5 @@
+// @env browser
+// @env jsdom
 import { chain } from '../src/helpers'
 
 describe('chain', () => {
