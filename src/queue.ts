@@ -13,6 +13,7 @@ export class QueueOptions {
   time = bool
 
   atomic = bool
+  concurrency?: number
 
   debounce?: number
   throttle?: number
@@ -56,6 +57,8 @@ export const wrapQueue = (options: QueueOptions = {} as QueueOptions) =>
         options.next = true
     }
 
+    let runningTasks = 0
+
     const cb = () => {
       let task: Task
 
@@ -66,7 +69,18 @@ export const wrapQueue = (options: QueueOptions = {} as QueueOptions) =>
             .catch((_error: Error) => {
               //!warn _error
             })
-            .finally(() => queueFn(cb))
+            .finally(() => {
+              if (options.concurrency) {
+                runningTasks--
+              }
+              queueFn(cb)
+            })
+          if (options.concurrency) {
+            runningTasks++
+            if (runningTasks < options.concurrency) {
+              queueFn(cb)
+            }
+          }
           return
         }
         if (options.last) {
