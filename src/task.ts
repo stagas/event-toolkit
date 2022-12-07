@@ -9,16 +9,24 @@ export type Task = {
   reject: Fn<any, any>
 }
 
-export const Task = (fn?: Fn<any, any>, self?: any, args?: any): Task => {
-  let resolve!: Fn<any, any>
-  let reject!: Fn<any, any>
-  const promise: Promise<any> = new Promise((rs, rj) => {
-    resolve = rs
-    reject = rj
-  })
-  return { promise, resolve, reject, fn, self, args }
+function taskDeferred(this: Task, resolve: Fn<any, any>, reject: Fn<any, any>) {
+  this.resolve = resolve
+  this.reject = reject
 }
 
-export const runTask = (task: Task, res?: any) => (task.resolve(res = task.fn!.apply(task.self, task.args)), res)
+export function Task(fn?: Fn<any, any>, self?: any, args?: any): Task {
+  const task = { fn, self, args } as Task
+  task.promise = new Promise(taskDeferred.bind(task))
+  return task
+}
 
-export const groupTasks = (other: Task, tasks: Task[]) => tasks.forEach(t => other.promise.then(t.resolve))
+export function taskRun(task: Task, res?: any) {
+  return (task.resolve(res = task.fn!.apply(task.self, task.args)), res)
+}
+
+function taskNext(other: any, t: any) {
+  return other.promise.then(t.resolve)
+}
+export function taskGroup(other: Task, tasks: Task[]) {
+  return tasks.forEach(taskNext.bind(null, other))
+}

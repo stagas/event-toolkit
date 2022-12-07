@@ -1,7 +1,12 @@
 import type { Fn } from 'everyday-types'
 import { shallowEqual } from 'everyday-utils'
 import { bool, toFluent } from 'to-fluent'
-import { groupTasks, runTask, Task } from './task'
+import { taskGroup, taskRun, Task } from './task'
+
+export interface Hooks {
+  before?: () => void
+  after?: () => void
+}
 
 export class QueueOptions {
   first = bool
@@ -17,40 +22,64 @@ export class QueueOptions {
 
   debounce?: number
   throttle?: number
+
+  hooks?: Hooks
 }
 
-export const wrapQueue = (options: QueueOptions = {} as QueueOptions) =>
-  <P extends any[], R>(fn: Fn<P, R>): Fn<P, R extends Promise<any> ? R : Promise<R>> => {
+export const wrapQueue = (options: Partial<QueueOptions> = {}) =>
+  <P extends any[], R>(queueFn: Fn<P, R>): Fn<P, R extends Promise<any> ? R : Promise<R>> => {
     const initialOptions = { ...options }
     const queued: Task[] = []
-    let queueFn: Fn<[Fn<any, any>], any>
+    let queueOuterFn: Fn<[Fn<any, any>], any>
     let id: any
     let last: any
     let runs = false
 
-    if (options.raf) queueFn = requestAnimationFrame
-    else if (options.task) queueFn = queueMicrotask
-    else if (options.time) queueFn = setTimeout
+    if (options.hooks) {
+      if (options.hooks.before || options.hooks.after) {
+        const real = queueFn
+        queueFn = function queueFn(this: any, ...args: P) {
+          options.hooks!.before?.()
+          const result = real.apply(this, args)
+          options.hooks!.after?.()
+          return result
+        }
+      }
+    }
+
+    if (options.raf) queueOuterFn = requestAnimationFrame
+    else if (options.task) queueOuterFn = queueMicrotask
+    else if (options.time) queueOuterFn = setTimeout
     else if (options.throttle != null) {
-      queueFn = fn => {
-        setTimeout(fn, options.throttle)
+      queueOuterFn = fn => {
+        runs = true
+        setTimeout(() => {
+          if (!queued.length) runs = false
+          fn()
+        }, options.throttle)
       }
     } else if (options.debounce != null) {
-      queueFn = fn => {
+      queueOuterFn = fn => {
         clearTimeout(id)
         id = setTimeout(fn, options.debounce)
       }
     } else if (options.atomic)
-      queueFn = fn => fn()
+      queueOuterFn = fn => fn()
     else {
       // No queue function provided, return identity.
       // This is used when extending this in `event`.
-      return fn as any
+      Object.assign(queueFn, {
+        fn: queueFn,
+        update: () => queueFn
+      })
+      return queueFn as any
     }
 
     if (options.first == null && options.last == null) {
-      if (options.throttle != null)
+      if (options.throttle != null) {
         options.first = true
+        options.last = true
+      }
       else if (options.debounce != null)
         options.last = true
       else
@@ -59,13 +88,13 @@ export const wrapQueue = (options: QueueOptions = {} as QueueOptions) =>
 
     let runningTasks = 0
 
-    const cb = () => {
+    function queueNext() {
       let task: Task
 
       if (queued.length) {
         if (options.atomic) {
           task = queued.shift()!
-          runTask(task)
+          taskRun(task)
             .catch((_error: Error) => {
               //!warn _error
             })
@@ -73,12 +102,12 @@ export const wrapQueue = (options: QueueOptions = {} as QueueOptions) =>
               if (options.concurrency) {
                 runningTasks--
               }
-              queueFn(cb)
+              queueOuterFn(queueNext)
             })
           if (options.concurrency) {
             runningTasks++
             if (runningTasks < options.concurrency) {
-              queueFn(cb)
+              queueOuterFn(queueNext)
             }
           }
           return
@@ -87,68 +116,74 @@ export const wrapQueue = (options: QueueOptions = {} as QueueOptions) =>
           if (options.next) {
             const left = queued.splice(0, queued.length - 1)
             task = left.pop() ?? queued.pop()!
-            groupTasks(task, left)
-            last = runTask(task)
-            if (queued.length) {
-              queueFn(cb)
-              return
+            taskGroup(task, left)
+            last = taskRun(task)
+            if (queued.length || options.throttle) {
+              queueOuterFn(queueNext)
             }
+            return
           } else {
             task = queued.pop()!
-            groupTasks(task, queued.splice(0))
-            last = runTask(task)
+            taskGroup(task, queued.splice(0))
+            last = taskRun(task)
+            if (options.throttle) {
+              queueOuterFn(queueNext)
+              return
+            }
           }
         } else if (options.next) {
           task = queued.shift()!
-          groupTasks(task, queued.splice(0, queued.length - 1))
-          queueFn(cb)
-          last = runTask(task)
+          taskGroup(task, queued.splice(0, queued.length - 1))
+          queueOuterFn(queueNext)
+          last = taskRun(task)
           return
         } else {
           task = Task()
-          groupTasks(task, queued.splice(0))
+          taskGroup(task, queued.splice(0))
           task.resolve(last)
         }
       }
       runs = false
     }
 
-    function wrapped(this: any, ...args: P) {
+    function queueWrap(this: any, ...args: P) {
       //!? 'wrap called'
-      const task = Task(fn, this, args)
+      const task = Task(queueFn, this, args)
 
       if (!runs && options.first) {
         runs = true
-        last = runTask(task)
-        queueFn(cb)
-        return task.promise
+        if (!queued.length) {
+          last = taskRun(task)
+          queueOuterFn(queueNext)
+          return task.promise
+        }
       }
 
       queued.push(task)
 
       if (!runs || options.debounce) {
         runs = true
-        queueFn(cb)
+        queueOuterFn(queueNext)
       }
 
       return task.promise
     }
 
-    wrapped.fn = fn
-    wrapped.options = initialOptions
+    queueWrap.fn = queueFn
+    queueWrap.options = initialOptions
 
-    wrapped.update = (newFn: Fn<P, R>, newOptions: QueueOptions) => {
+    queueWrap.update = (newFn: Fn<P, R>, newOptions: QueueOptions) => {
       //!? 'updating fn'
       if (!shallowEqual(initialOptions, newOptions)) {
         //!? 'new options', initialOptions, newOptions
         return newFn
       }
-      fn = newFn
+      queueFn = newFn
       //!? 'updated and returned previous wrapped'
-      return wrapped
+      return queueWrap
     }
 
-    return wrapped as any
+    return queueWrap as any
   }
 
 /**

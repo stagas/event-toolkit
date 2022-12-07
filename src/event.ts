@@ -14,7 +14,7 @@ export class EventOptions extends QueueOptions {
 }
 
 export const wrapEvent = (options: EventOptions = {} as EventOptions) =>
-  <T extends Target, E extends Event>(fn: EventHandler<T, E> = () => {}) =>
+  <T extends Target, E extends Event>(fn: EventHandler<T, E> = () => { }) =>
     wrapQueue(options)(
       options.prevent
         || options.stop
@@ -22,7 +22,7 @@ export const wrapEvent = (options: EventOptions = {} as EventOptions) =>
         || (options.capture != null)
         || (options.once != null)
         || (options.passive != null)
-        ? Object.assign(function(this: T, e: E) {
+        ? Object.assign(function eventHandler(this: T, e: E) {
           if (options.prevent) e.preventDefault()
           if (options.stop) {
             options.immediate

@@ -10,11 +10,16 @@ export class AbortOptions {
 export const abort = toFluent(
   AbortOptions,
   options =>
-    <P extends any[], R extends Promise<any>>(fn: (signal: AbortSignal) => Fn<P, R>) => {
+    <P extends any[], R>(fn:
+      (signal: AbortSignal) => Fn<P, R>
+    ): Fn<P, R extends Promise<any> ? R : Promise<R>> => {
       let ctrl: AbortController
-      return async function(this: any, ...args: P) {
+
+      const wrap = Object.assign(async function wrap(this: any, ...args: P) {
         if (options.latest && ctrl) ctrl.abort()
+
         ctrl = new AbortController()
+
         if (options.timeout != null) {
           const timeoutError = new Error('Timed out')
           try {
@@ -41,6 +46,9 @@ export const abort = toFluent(
         } else {
           return fn(ctrl.signal).apply(this, args)
         }
-      }
+        // @ts-ignore
+      }, { fn: fn() })
+
+      return wrap as any
     }
 )
