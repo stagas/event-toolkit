@@ -93,7 +93,12 @@ export const wrapQueue = (options: Partial<QueueOptions> = {}) =>
 
       if (queued.length) {
         if (options.atomic) {
-          task = queued.shift()!
+          if (options.last) {
+            task = queued.pop()!
+            queued.splice(0)
+          } else {
+            task = queued.shift()!
+          }
           taskRun(task)
             .catch((_error: Error) => {
               //!warn _error
