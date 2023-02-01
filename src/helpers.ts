@@ -5,7 +5,7 @@ export function chain(...rest: AnyFn[]): () => any
 export function chain(first: AnyFn | AnyFn[] | AnyFn[][], ...rest: AnyFn[]) {
   if (Array.isArray(first)) {
     ;[first, ...rest] = first.flat().filter(Boolean)
-    if (first == null) return
+    if (first == null) return () => { }
   }
   rest = rest.filter(Boolean)
   return (...args: any[]) => {
