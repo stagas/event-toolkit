@@ -1,7 +1,7 @@
 
 
 <h1>
-event-toolkit <a href="https://npmjs.org/package/event-toolkit"><img src="https://img.shields.io/badge/npm-v1.3.0-F00.svg?colorA=000"/></a> <a href="src"><img src="https://img.shields.io/badge/loc-374-FFF.svg?colorA=000"/></a> <a href="https://cdn.jsdelivr.net/npm/event-toolkit@1.3.0/dist/event-toolkit.min.js"><img src="https://img.shields.io/badge/brotli-1.8K-333.svg?colorA=000"/></a> <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-F0B.svg?colorA=000"/></a>
+event-toolkit <a href="https://npmjs.org/package/event-toolkit"><img src="https://img.shields.io/badge/npm-v1.3.1-F00.svg?colorA=000"/></a> <a href="src"><img src="https://img.shields.io/badge/loc-374-FFF.svg?colorA=000"/></a> <a href="https://cdn.jsdelivr.net/npm/event-toolkit@1.3.1/dist/event-toolkit.min.js"><img src="https://img.shields.io/badge/brotli-1.8K-333.svg?colorA=000"/></a> <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-F0B.svg?colorA=000"/></a>
 </h1>
 
 <p></p>
@@ -37,4 +37,4 @@ All contributions are welcome!
 
 ## License
 
-<a href="LICENSE">MIT</a> &copy; 2022 [stagas](https://github.com/stagas)
+<a href="LICENSE">MIT</a> &copy; 2023 [stagas](https://github.com/stagas)
